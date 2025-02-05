@@ -8,7 +8,8 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // To handle JSON data
+app.use(bodyParser.urlencoded({ extended: true }));  // To handle form data (URL-encoded)
 
 // Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
@@ -19,6 +20,11 @@ app.use('/api', userRoutes);
 // Serve the Signup page on `/signup`
 app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'signup.html'));
+});
+
+// Serve the SignIn page on `/signin`
+app.get('/signin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'signin.html'));
 });
 
 // Sync database & start server
