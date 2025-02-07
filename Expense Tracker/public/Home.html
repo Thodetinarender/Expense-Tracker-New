@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker - Home</title>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -12,6 +13,7 @@
 
         <!-- Logout Button (Same as new code) -->
         <button onclick="logout()" class="btn btn-danger float-end">Logout</button>
+        <button id="buyPremiumBtn" class="btn btn-success">Buy Premium</button>
 
         <!-- Expense Form -->
         <div class="mt-4">
@@ -63,6 +65,7 @@
     </div>
 
     <script>
+  
         document.addEventListener("DOMContentLoaded", async () => {
             const token = localStorage.getItem("token");
             if (!token) {
@@ -197,6 +200,76 @@
             localStorage.removeItem("token");
             window.location.href = "/signin.html";
         }
+      document.getElementById("buyPremiumBtn").addEventListener("click", async () => {
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId"); // Ensure userId is retrieved
+    const amount = 199; // Set a fixed amount for premium purchase
+
+    console.log("Sending payment request:", { userId, amount });
+
+    const response = await fetch("http://localhost:5000/api/create-order", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId, amount }) // Ensure correct data is sent
+    });
+
+    const data = await response.json();
+    console.log("Payment API response:", data); // Debugging log
+
+    if (response.ok) {
+        let checkoutOptions = {
+            paymentSessionId: data.paymentSessionId,
+            redirectTarget: "_self",
+        };
+        cashfree.checkout(checkoutOptions);
+    } else {
+        alert("Failed to initiate payment: " + data.message);
+    }
+});
+
+document.getElementById("buyPremiumBtn").addEventListener("click", async () => {
+    const token = localStorage.getItem("token");
+    const userId = 13//localStorage.getItem("userId");
+
+    if (!userId) {
+        alert("User ID is missing! Please log in again.");
+        window.location.href = "/signin.html"; 
+        return;
+    }
+
+    const amount = 199; // Fixed premium price
+    console.log("🔹 Sending payment request:", { userId, amount });
+
+    const response = await fetch("http://localhost:5000/api/create-order", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId, amount })
+    });
+
+    const data = await response.json();
+    console.log("🔹 Payment API Response:", data); // Debugging log
+
+    if (response.ok && data.paymentSessionId) {
+        console.log("🔹 Redirecting to Cashfree Checkout...");
+        let checkoutOptions = {
+            paymentSessionId: data.paymentSessionId,
+            redirectTarget: "_self",
+        };
+        cashfree.checkout(checkoutOptions);
+    } else {
+        console.error("❌ Payment initiation failed:", data);
+        alert("Failed to initiate payment: " + (data.message || "Unknown error"));
+    }
+});
+
+
+
     </script>
 </body>
 </html>
