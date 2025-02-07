@@ -29,7 +29,8 @@ const Expense  = sequelize.define('expense', {
     }
 });
 
-// Set up the relationship between Expense and User
-Expense.belongsTo(User, { foreignKey: 'userId' }); // Each expense belongs to one user
+// Define the relationship: One User -> Many Expenses
+User.hasMany(Expense, { foreignKey: 'userId', onDelete: 'CASCADE' });
+Expense.belongsTo(User, { foreignKey: 'userId' });
 
 module.exports = Expense;

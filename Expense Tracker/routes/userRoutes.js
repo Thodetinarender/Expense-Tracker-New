@@ -1,21 +1,20 @@
 const express = require('express');
-const userController = require('../controllers/userController');
-
 const router = express.Router();
+const userController = require('../controllers/userController');
+const Expense = require('../models/expense'); // Import Expense model
 
-// Signup route
+// Authentication middleware
+const { authenticateToken } = userController;
+
+// Authentication routes
 router.post('/signup', userController.signup);
-
-// Sign In route
 router.post('/signin', userController.signin);
 
-// New expense route
-router.post('/add-expense', userController.expense);
+// Protected expense routes
+router.post('/add-expense', authenticateToken, userController.addExpense);
 
-// Home route to fetch and render expenses for the logged-in user
-router.get('/home', userController.homePage); // Fetches and renders home page with expenses
+router.get('/expenses', authenticateToken, userController.expenses);
 
-// Route to delete an expense
-router.delete('/expense/:id', userController.deleteExpense);
+router.delete('/expense/:id', authenticateToken, userController.deleteExpense);
 
 module.exports = router;
