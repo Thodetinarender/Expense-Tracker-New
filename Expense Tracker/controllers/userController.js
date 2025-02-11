@@ -189,7 +189,6 @@ exports.expenses = async (req, res) => {
 }
 
 const { Sequelize } = require('sequelize');
-
 exports.getAllUsersTotalExpenses = async (req, res) => {
     try {
         // Ensure only Premium users can access this data
@@ -197,14 +196,24 @@ exports.getAllUsersTotalExpenses = async (req, res) => {
             return res.status(403).json({ message: "Access Denied! Only Premium users can view this." });
         }
 
-        const usersTotalExpenses = await Expense.findAll({
+        // Fetch users and their total expenses
+        const usersTotalExpenses = await User.findAll({
             attributes: [
-                'userId',
-                [Sequelize.fn('SUM', Sequelize.col('amount')), 'totalExpenses']
+                'id', // User ID
+                'name', // User name
+                // 'email', // User email
+                [
+                    Sequelize.fn('COALESCE', Sequelize.fn('SUM', Sequelize.col('Expenses.amount')), 0),
+                    'totalExpenses'
+                ] // Calculate total expenses, and return 0 if there are none
             ],
-            include: [{ model: User, attributes: ['name', 'email'] }], // Join User table
-            group: ['userId', 'user.id'], // Group by userId
-            order: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'DESC']] // Sort descending
+            include: [{
+                model: Expense,
+                attributes: [] // We don't need specific attributes from Expense, just want to aggregate data
+            }],
+            group: ['User.id'], // Group by User ID
+            order: [[Sequelize.fn('SUM', Sequelize.col('Expenses.amount')), 'DESC']], // Sort descending by totalExpenses
+            required: false // Ensure we do a LEFT JOIN to include users with no expenses
         });
 
         res.status(200).json(usersTotalExpenses);

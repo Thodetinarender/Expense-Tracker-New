@@ -25,7 +25,7 @@
 // module.exports = router;
 
 import express from "express";
-import { signup, signin, authenticateToken, addExpense, expenses, deleteExpense } from "../controllers/userController.js";
+import { signup, signin, authenticateToken, addExpense, expenses, deleteExpense,getAllUsersTotalExpenses } from "../controllers/userController.js";
 
 const router = express.Router();
 
@@ -37,6 +37,9 @@ router.post("/signin", signin);
 router.post("/add-expense", authenticateToken, addExpense);
 router.get("/expenses", authenticateToken, expenses);
 router.delete("/expense/:id", authenticateToken, deleteExpense);
+
+//Premium Users
+router.get('/total-expenses', authenticateToken, getAllUsersTotalExpenses);
 
 
 export default router; // ✅ Use ES Modules

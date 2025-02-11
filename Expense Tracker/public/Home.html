@@ -64,6 +64,31 @@
         </div>
     </div>
 
+
+    <!-- Premium Status & Show Expenses Button -->
+<div class="text-center mt-4">
+    <h3 id="premiumStatus" class="text-success"></h3>
+    <button id="showTotalExpensesBtn" class="btn btn-primary d-none">Show All Users' Total Expenses</button>
+</div>
+
+<!-- Table to Show All Users' Expenses -->
+<div class="container mt-4" id="totalExpensesContainer" style="display: none;">
+    <h4 class="text-center">All Users' Total Expenses</h4>
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>User Name</th>
+                <!-- <th>Email</th> -->
+                <th>Total Expenses (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="totalExpensesTableBody">
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+</div>
+
+
     <script>
   
         document.addEventListener("DOMContentLoaded", async () => {
@@ -278,8 +303,8 @@ function displayAllUsersTotalExpenses(usersTotalExpenses) {
             const row = document.createElement("tr");
 
             row.innerHTML = `
-                <td>${user.user.name}</td>
-                <td>${user.user.email}</td>
+                <td>${user.name}</td>  <!-- Access user.name directly -->
+                <!-- <td>${user.email}</td> --> <!-- Access user.email directly -->
                 <td>₹${user.totalExpenses || 0}</td>
             `;
 
@@ -289,6 +314,7 @@ function displayAllUsersTotalExpenses(usersTotalExpenses) {
 
     document.getElementById("totalExpensesContainer").style.display = "block"; // Show table
 }
+
 
 
 
