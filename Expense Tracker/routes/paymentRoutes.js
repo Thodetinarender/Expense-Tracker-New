@@ -1,12 +1,9 @@
-// import express from "express";
-// import { createPaymentOrder, verifyPaymentStatus } from "../controllers/paymentController.js";
-// import { authenticateToken } from "../controllers/userController.js";
+import express from "express";
+import { createOrder, getPaymentStatus, handlePaymentWebhook } from "../controllers/paymentController.js";
 
-// const router = express.Router();
+const router = express.Router();
+router.post("/create-order", createOrder);
+router.get("/status", getPaymentStatus);
+router.post("/webhook", handlePaymentWebhook); // Webhook endpoint
 
-// router.post("/create-order", authenticateToken, createPaymentOrder);
-// router.get("/payment-status/:orderId", verifyPaymentStatus);
-
-// //module.exports = router;
-// export default router; 
-
+export default router; // ✅ Use ES Modules

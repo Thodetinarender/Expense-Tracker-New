@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker - Home</title>
-    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -13,7 +12,8 @@
 
         <!-- Logout Button (Same as new code) -->
         <button onclick="logout()" class="btn btn-danger float-end">Logout</button>
-        <button id="buyPremiumBtn" class="btn btn-success">Buy Premium</button>
+        <button id="buyPremiumBtn" class="btn btn-success" onclick="window.location.href = 'paymentForm.html'">Buy Premium</button>
+
 
         <!-- Expense Form -->
         <div class="mt-4">
@@ -200,73 +200,96 @@
             localStorage.removeItem("token");
             window.location.href = "/signin.html";
         }
-      document.getElementById("buyPremiumBtn").addEventListener("click", async () => {
+
+
+    function getUserFromToken() {
     const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId"); // Ensure userId is retrieved
-    const amount = 199; // Set a fixed amount for premium purchase
+    if (!token) return null;
 
-    console.log("Sending payment request:", { userId, amount });
-
-    const response = await fetch("http://localhost:5000/api/create-order", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ userId, amount }) // Ensure correct data is sent
-    });
-
-    const data = await response.json();
-    console.log("Payment API response:", data); // Debugging log
-
-    if (response.ok) {
-        let checkoutOptions = {
-            paymentSessionId: data.paymentSessionId,
-            redirectTarget: "_self",
-        };
-        cashfree.checkout(checkoutOptions);
-    } else {
-        alert("Failed to initiate payment: " + data.message);
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1])); // Decode JWT payload
+        return payload; // Returns { id, email, isPremium }
+    } catch (error) {
+        console.error("Invalid token:", error);
+        return null;
     }
+}
+
+
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "/signin.html"; // Redirect if not logged in
+    } else {
+        const user = getUserFromToken();
+        
+        // Check if the user is premium
+        if (user.isPremium) {
+            document.getElementById("premiumStatus").textContent = "🎉 You are a Premium Member!";
+            document.getElementById("showTotalExpensesBtn").classList.remove("d-none"); // Show button
+        }
+
+        await fetchExpenses(); // Fetch user's personal expenses
+    }
+
+    // Event listener for "Show All Users' Total Expenses" button
+    document.getElementById("showTotalExpensesBtn").addEventListener("click", fetchAllUsersTotalExpenses);
 });
 
-document.getElementById("buyPremiumBtn").addEventListener("click", async () => {
+// Function to fetch all users' total expenses
+async function fetchAllUsersTotalExpenses() {
     const token = localStorage.getItem("token");
-    const userId = 13//localStorage.getItem("userId");
 
-    if (!userId) {
-        alert("User ID is missing! Please log in again.");
-        window.location.href = "/signin.html"; 
-        return;
+    try {
+        const response = await fetch("http://localhost:5000/api/total-expenses", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to fetch total expenses");
+        }
+
+        const usersTotalExpenses = await response.json();
+        displayAllUsersTotalExpenses(usersTotalExpenses); // Call function to display data
+
+    } catch (error) {
+        console.error("Error fetching total expenses:", error.message);
+        alert("Error fetching total expenses: " + error.message);
     }
+}
 
-    const amount = 199; // Fixed premium price
-    console.log("🔹 Sending payment request:", { userId, amount });
+// Function to display total expenses in a table
+function displayAllUsersTotalExpenses(usersTotalExpenses) {
+    const tableBody = document.getElementById("totalExpensesTableBody");
+    tableBody.innerHTML = ""; // Clear existing entries
 
-    const response = await fetch("http://localhost:5000/api/create-order", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ userId, amount })
-    });
-
-    const data = await response.json();
-    console.log("🔹 Payment API Response:", data); // Debugging log
-
-    if (response.ok && data.paymentSessionId) {
-        console.log("🔹 Redirecting to Cashfree Checkout...");
-        let checkoutOptions = {
-            paymentSessionId: data.paymentSessionId,
-            redirectTarget: "_self",
-        };
-        cashfree.checkout(checkoutOptions);
+    if (usersTotalExpenses.length === 0) {
+        const noDataRow = document.createElement("tr");
+        noDataRow.innerHTML = `<td colspan="3" class="text-center">No expenses recorded yet.</td>`;
+        tableBody.appendChild(noDataRow);
     } else {
-        console.error("❌ Payment initiation failed:", data);
-        alert("Failed to initiate payment: " + (data.message || "Unknown error"));
+        usersTotalExpenses.forEach(user => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${user.user.name}</td>
+                <td>${user.user.email}</td>
+                <td>₹${user.totalExpenses || 0}</td>
+            `;
+
+            tableBody.appendChild(row);
+        });
     }
-});
+
+    document.getElementById("totalExpensesContainer").style.display = "block"; // Show table
+}
+
 
 
 

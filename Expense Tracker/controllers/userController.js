@@ -39,6 +39,37 @@ exports.signup = async (req, res) => {
 };
 
 
+// exports.signin = async (req, res) => {
+//     try {
+//         const { email, password } = req.body;
+
+//         if (!email || !password) {
+//             return res.status(400).json({ message: "Email and password are required" });
+//         }
+
+//         // Find the user with the provided email
+//         const user = await User.findOne({ where: { email } });
+
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
+
+//         // Compare the provided password with the stored hash
+//         const isPasswordValid = await bcrypt.compare(password, user.password);
+
+//         if (!isPasswordValid) {
+//             return res.status(401).json({ message: "Invalid password" });
+//         }
+
+//          res.status(200).json({ message: "Login successful", token: generateToken(user) });
+
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: "Error signing in" });
+//     }
+// };
+
+
 exports.signin = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -47,24 +78,28 @@ exports.signin = async (req, res) => {
             return res.status(400).json({ message: "Email and password are required" });
         }
 
-        // Find the user with the provided email
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Compare the provided password with the stored hash
         const isPasswordValid = await bcrypt.compare(password, user.password);
-
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid password" });
         }
 
-         res.status(200).json({ message: "Login successful", token: generateToken(user) });
+        // Generate token with user ID inside it
+        const token = jwt.sign(
+            { id: user.id, email: user.email, isPremium: user.isPremium },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+        );
+
+        res.status(200).json({ message: "Login successful", token , isPremium: user.isPremium });
 
     } catch (error) {
-        console.error(error);
+        console.error("Sign-in error:", error);
         res.status(500).json({ message: "Error signing in" });
     }
 };
@@ -87,6 +122,8 @@ exports.authenticateToken = (req, res, next) => {
         return res.status(403).json({ message: "Invalid token" });
     }
 };
+
+
 
 
 exports.addExpense =async(req, res) =>{
@@ -151,3 +188,28 @@ exports.expenses = async (req, res) => {
     }
 }
 
+const { Sequelize } = require('sequelize');
+
+exports.getAllUsersTotalExpenses = async (req, res) => {
+    try {
+        // Ensure only Premium users can access this data
+        if (!req.user.isPremium) {
+            return res.status(403).json({ message: "Access Denied! Only Premium users can view this." });
+        }
+
+        const usersTotalExpenses = await Expense.findAll({
+            attributes: [
+                'userId',
+                [Sequelize.fn('SUM', Sequelize.col('amount')), 'totalExpenses']
+            ],
+            include: [{ model: User, attributes: ['name', 'email'] }], // Join User table
+            group: ['userId', 'user.id'], // Group by userId
+            order: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'DESC']] // Sort descending
+        });
+
+        res.status(200).json(usersTotalExpenses);
+    } catch (error) {
+        console.error("Error fetching total expenses:", error.message);
+        res.status(500).json({ message: "Error fetching total expenses" });
+    }
+};

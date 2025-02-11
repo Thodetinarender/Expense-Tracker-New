@@ -23,7 +23,7 @@ const User = sequelize.define('user', {
     },
     isPremium: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false  // By default, users are NOT premium
+        defaultValue: false  // Initially NOT Premium
     }
 });
 

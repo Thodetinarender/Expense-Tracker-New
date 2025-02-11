@@ -26,7 +26,6 @@
 
 import express from "express";
 import { signup, signin, authenticateToken, addExpense, expenses, deleteExpense } from "../controllers/userController.js";
-import { createPaymentOrder, verifyPaymentStatus } from "../controllers/paymentController.js";
 
 const router = express.Router();
 
@@ -39,9 +38,6 @@ router.post("/add-expense", authenticateToken, addExpense);
 router.get("/expenses", authenticateToken, expenses);
 router.delete("/expense/:id", authenticateToken, deleteExpense);
 
-// Payment routes
-router.post("/create-order", authenticateToken, createPaymentOrder);
-router.get("/payment-status/:orderId", verifyPaymentStatus);
 
 export default router; // ✅ Use ES Modules
 

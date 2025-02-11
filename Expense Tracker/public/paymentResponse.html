@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Form</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* public/style.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #222;
+    color: white;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+#intro {
+    text-align: center;
+    margin-top: 50px;
+}
+
+#payment-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+input[type="number"] {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+footer {
+    font-size: 14px;
+    margin-top: 50px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.btn:hover {
+    background-color: #45a049;
+}
+
+#payment-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-radius: 8px;
+}
+
+    </style> 
+</head>
+
+<body>
+   
+    <header>
+        <h1>Payment Status</h1>
+    </header>
+    <section id="payment-section">
+        <div id="payment-box">
+            <h2>Payment Status</h2>
+            <p id="status">Loading...</p>
+            <p>Back to Home <a href="/home.html" class="btn">OK</a></p>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 My Web App</p>
+    </footer>
+    <!-- <script>
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get("order_id");
+
+            if (!orderId) {
+                document.getElementById("status").innerText = "Invalid Payment Response!";
+                return;
+            }
+
+            fetch(`http://localhost:5000/api/payment/status?order_id=${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("status").innerText = data.status === "PAID" 
+                        ? "Payment Successful!" 
+                        : "Payment Failed!";
+                })
+                .catch(error => {
+                    document.getElementById("status").innerText = "Error fetching payment status!";
+                });
+        };
+    </script> -->
+
+    <script>
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get("order_id");
+
+            if (!orderId) {
+                document.getElementById("status").innerText = "Invalid Payment Response!";
+                return;
+            }
+
+            fetch(`http://localhost:5000/api/payment/status?order_id=${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("status").innerText = data.status === "PAID" 
+                        ? "Payment Successful!" 
+                        : "Payment Failed!";
+                })
+                .catch(error => {
+                    document.getElementById("status").innerText = "Error fetching payment status!";
+                });
+        };
+    </script>
+    
+</body>
+</html>
+
+
+
