@@ -24,6 +24,11 @@ const User = sequelize.define('user', {
     isPremium: {
         type: Sequelize.BOOLEAN,
         defaultValue: false  // Initially NOT Premium
+    },
+    totalExpense: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0, // Default value is 0
+        allowNull: false
     }
 });
 

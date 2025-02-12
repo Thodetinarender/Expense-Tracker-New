@@ -66,6 +66,8 @@
 
 
     <!-- Premium Status & Show Expenses Button -->
+     <br>
+     <br>
 <div class="text-center mt-4">
     <h3 id="premiumStatus" class="text-success"></h3>
     <button id="showTotalExpensesBtn" class="btn btn-primary d-none">Show All Users' Total Expenses</button>
@@ -96,6 +98,13 @@
             if (!token) {
                 window.location.href = "/signin.html"; // Redirect to signin if no token
             } else {
+                const user = getUserFromToken();
+            
+            // Check if the user is premium
+            if (user.isPremium) {
+                // If the user is premium, hide the Buy Premium button
+                document.getElementById("buyPremiumBtn").style.display = "none";
+            }
                 await fetchExpenses(); // Load expenses after login
             }
 
@@ -305,7 +314,7 @@ function displayAllUsersTotalExpenses(usersTotalExpenses) {
             row.innerHTML = `
                 <td>${user.name}</td>  <!-- Access user.name directly -->
                 <!-- <td>${user.email}</td> --> <!-- Access user.email directly -->
-                <td>₹${user.totalExpenses || 0}</td>
+                <td>₹${user.totalExpense || 0}</td>
             `;
 
             tableBody.appendChild(row);
