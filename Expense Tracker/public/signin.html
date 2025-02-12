@@ -23,35 +23,29 @@
             <button type="submit" class="btn btn-primary w-100">Sign In</button>
         </form>
 
+
+        <!-- Forgot Password Form (Initially Hidden) -->
+        <div id="forgotPasswordForm" class="mt-4" style="display: none;">
+            <h4 class="text-center">Reset Your Password</h4>
+            <form id="forgotPasswordFormElement" style="max-width: 500px; margin: 0 auto;">
+                <div class="mb-3">
+                    <label for="forgotEmail" class="form-label">Enter Your Email</label>
+                    <input type="email" class="form-control" id="forgotEmail" required>
+                </div>
+                <button type="submit" class="btn btn-warning w-100">Reset Password</button>
+            </form>
+            <br>
+            <p style="text-align: center;">Already have an account? <a href="/signin.html">Sign In</a></p>
+        </div>
+
         <div class="mt-3 text-center">
             <p>Don't have an account? <a href="/signup.html">Sign Up</a></p>
+            <p><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
         </div>
     </div>
 
     <script>
-        // document.getElementById("signinForm").addEventListener("submit", async function(event) {
-        //     event.preventDefault();
-
-        //     const email = document.getElementById("email").value;
-        //     const password = document.getElementById("password").value;
-
-        //     const response = await fetch("http://localhost:5000/api/signin", {
-        //         method: "POST",
-        //         headers: {
-        //             "Content-Type": "application/json"
-        //         },
-        //         body: JSON.stringify({ email, password })
-        //     });
-
-        //     const data = await response.json();
-        //     if (data.token) {
-        //         localStorage.setItem("token", data.token);
-        //         window.location.href = "/home.html";
-        //     } else {
-        //         alert(data.message);
-        //     }
-        // });
-
+      
         document.getElementById("signinForm").addEventListener("submit", async function(event) {
     event.preventDefault();
 
@@ -80,6 +74,44 @@
         alert("Something went wrong! Please try again.");
     }
 });
+
+
+document.getElementById("forgotPasswordLink").addEventListener("click", function(event) {
+    event.preventDefault();
+    
+    // Hide sign-in form and show forgot password form
+    document.getElementById("signinForm").style.display = "none";
+    document.getElementById("forgotPasswordForm").style.display = "block";
+});
+
+document.getElementById("forgotPasswordFormElement").addEventListener("submit", async function(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById("forgotEmail").value;
+
+    try {
+        const response = await fetch("http://localhost:5000/password/forgotpassword", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+        alert(data.message || "If this email exists, you'll receive a reset link.");
+        
+        // Show sign-in form again after successful submission
+        document.getElementById("signinForm").style.display = "block";
+        document.getElementById("forgotPasswordForm").style.display = "none";
+        
+    } catch (error) {
+        console.error("Error during password reset request:", error);
+        alert("Something went wrong! Please try again.");
+    }
+});
+
+
 
     </script>
 
