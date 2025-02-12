@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Expense = require('../models/expense');
+const sequelize = require('../util/database');
 require('dotenv').config();
 
 // Generate JWT Token
@@ -12,15 +13,17 @@ const generateToken = (user) => {
 
 
 exports.signup = async (req, res) => {
+    const t = await sequelize.transaction(); // Start transaction
     try {
         const { name, email, password } = req.body;
 
         if (!name || !email || !password) {
-            return res.status(400).json({ message: "Email, name and password are required" });
+            return res.status(400).json({ message: "Name, email, and password are required" });
         }
 
-        const existingUser = await User.findOne({ where: { email } });
+        const existingUser = await User.findOne({ where: { email }, transaction: t });
         if (existingUser) {
+            await t.rollback();
             return res.status(400).json({ message: "Email already in use" });
         }
 
@@ -28,11 +31,13 @@ exports.signup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user with hashed password
-        const newUser = await User.create({ name, email, password: hashedPassword });
+        const newUser = await User.create({ name, email, password: hashedPassword },{ transaction: t});
 
+        await t.commit(); // Commit transaction
         res.status(201).json({ message: "User registered successfully!", token: generateToken(newUser) });
 
     } catch (error) {
+        await t.rollback(); // Rollback on error
         console.error(error);
         res.status(500).json({ message: "Error signing up user" });
     }
@@ -96,55 +101,67 @@ exports.authenticateToken = (req, res, next) => {
 
 
 exports.addExpense =async(req, res) =>{
+    const t = await sequelize.transaction();
     try{
         const {amount, description,category}=req.body;
 
         if(!amount || !description || !category){
-            return res.status(400).json({ message: "amount, descrpition and category are required" });
+            return res.status(400).json({ message: "amount, description and category are required" });
         }
-        const newExpense = await Expense.create({amount, description,category, userId: req.user.id });
+        const newExpense = await Expense.create({amount, description,category, userId: req.user.id }, {transaction:t});
      
         // Update totalExpense in User table
         await User.increment('totalExpense', { 
             by: amount, 
-            where: { id: req.user.id } 
+            where: { id: req.user.id } ,
+            transaction:t
+
         });
+
+        // Commit the transaction
+        await t.commit();
 
         res.status(201).json({ message: "Expense added successfully", expense: newExpense });
 
 
     } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error adding expense" });
+        await t.rollback(); // Rollback if any error occurs
+        console.error(error);
+        res.status(500).json({ message: "Error adding expense" });
     }
 
 }
 
 
 exports.deleteExpense = async (req, res) => {
+    const t = await sequelize.transaction(); // Start transaction
     try {
         const expenseId = req.params.id;
 
         // Ensure the expense belongs to the logged-in user
-        const expense = await Expense.findOne({ where: { id: expenseId, userId: req.user.id } });
+        const expense = await Expense.findOne({ where: { id: expenseId, userId: req.user.id }, transaction:t });
 
 
         if (!expense) {
+            await t.rollback(); // Rollback if expense is not found
             return res.status(404).json({ message: "Expense not found" });
         }
 
          // Subtract the deleted expense amount from totalExpense
          await User.increment('totalExpense', { 
             by: -expense.amount, 
-            where: { id: req.user.id } 
+            where: { id: req.user.id },
+            transaction: t 
         });
 
         // Delete the expense
-        await expense.destroy();
+        await expense.destroy({ transaction: t });
+        await t.commit(); // Commit the transaction
 
         // Send success message
         res.status(200).json({ message: "Expense deleted successfully" });
     } catch (error) {
+        await t.rollback(); // Rollback transaction on error
         console.error(error);
         res.status(500).json({ message: "Error deleting expense" });
     }
