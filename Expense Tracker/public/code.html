@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -38,8 +39,7 @@
             <p style="text-align: center;">Already have an account? <a href="/signin.html">Sign In</a></p>
         </div>
 
-         <!-- Modified this section to be in its own div -->
-         <div id="authLinks" class="mt-3 text-center">
+        <div class="mt-3 text-center">
             <p>Don't have an account? <a href="/signup.html">Sign Up</a></p>
             <p><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
         </div>
@@ -82,24 +82,16 @@ document.getElementById("forgotPasswordLink").addEventListener("click", function
     
     // Hide sign-in form and show forgot password form
     document.getElementById("signinForm").style.display = "none";
-    document.getElementById("authLinks").style.display = "none";
-    
     document.getElementById("forgotPasswordForm").style.display = "block";
 });
-
 
 document.getElementById("forgotPasswordFormElement").addEventListener("submit", async function(event) {
     event.preventDefault();
     
     const email = document.getElementById("forgotEmail").value;
-    const submitButton = this.querySelector('button[type="submit"]');
 
     try {
-        // Disable button and show loading state
-        submitButton.disabled = true;
-        submitButton.textContent = "Sending...";
-
-        const response = await fetch("http://localhost:5000/api/password/forgot", {
+        const response = await fetch("http://localhost:5000/password/forgotpassword", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -108,27 +100,23 @@ document.getElementById("forgotPasswordFormElement").addEventListener("submit", 
         });
 
         const data = await response.json();
-        if (data.success) {
-             alert(data.message);
-              // Remove the redirect
-            // window.location.href = "/resetPassword.html";
-        } else {
-              throw new Error(data.message || "Failed to send reset email"); 
-            }
-
+        alert(data.message || "If this email exists, you'll receive a reset link.");
+        
+        // Show sign-in form again after successful submission
+        document.getElementById("signinForm").style.display = "block";
+        document.getElementById("forgotPasswordForm").style.display = "none";
+        
     } catch (error) {
-        console.error("Forgot password error:", error);
-        alert(error.message || "Something went wrong! Please try again.");
-    } finally {
-        // Reset button state
-        submitButton.disabled = false;
-        submitButton.textContent = "Reset Password";
+        console.error("Error during password reset request:", error);
+        alert("Something went wrong! Please try again.");
     }
 });
+
+
 
     </script>
 
     <!-- Bootstrap JS (Optional for interactivity) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html> -->
