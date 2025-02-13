@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker - Premium User</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .pagination {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Replace the existing expense display section with this new structure -->
 <div class="container mt-5">
     <h1 class="text-center mb-4">Day to Day Expenses</h1>
     
@@ -55,6 +59,9 @@
         </table>
     </div>
 
+    <!-- Pagination Controls -->
+    <div class="pagination" id="pagination-controls"></div>
+
     <!-- Yearly Report -->
     <h2 class="text-center mb-4">Yearly Report</h2>
     <div class="table-responsive mb-5">
@@ -81,17 +88,14 @@
     </div>
 </div>
 
-<!-- Add this in your head section for the download icon -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-
-
-
-<!-- Add this to your script section -->
 <script>
+let currentPage = 1;
+const expensesPerPage = 10;
+let expenses = [];
+
 document.addEventListener("DOMContentLoaded", async () => {
-    // ... existing DOMContentLoaded code ...
-    
     // Populate year select
     const currentYear = new Date().getFullYear();
     const yearSelect = document.getElementById('yearSelect');
@@ -102,16 +106,44 @@ document.addEventListener("DOMContentLoaded", async () => {
         yearSelect.appendChild(option);
     }
 
-    // Set current month in month sel ect
+    // Set current month in month select
     document.getElementById('monthSelect').value = new Date().getMonth();
+
+    // Fetch expenses on load
+    await fetchExpenses();
 });
+
+async function fetchExpenses() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "/signin.html"; // Redirect if not logged in
+        return;
+    }
+
+    try {
+        const response = await fetch("http://localhost:5000/api/expenses", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch expenses");
+        }
+
+        expenses = await response.json();
+        localStorage.setItem("expenses", JSON.stringify(expenses)); // Store expenses in localStorage
+        updateExpenses(); // Update the displayed expenses
+    } catch (error) {
+        console.error("Error fetching expenses:", error);
+        alert("Error fetching expenses: " + error.message);
+    }
+}
 
 function updateExpenses() {
     const selectedYear = document.getElementById('yearSelect').value;
     const selectedMonth = document.getElementById('monthSelect').value;
-    const expenses = JSON.parse(localStorage.getItem("expenses") || "[]");
-
-    // Filter expenses for selected month and year
     const filteredExpenses = expenses.filter(expense => {
         const expenseDate = new Date(expense.createdAt);
         return expenseDate.getFullYear() == selectedYear && 
@@ -119,14 +151,18 @@ function updateExpenses() {
     });
 
     displayDailyTransactions(filteredExpenses);
-    displayMonthlyReport(filteredExpenses, selectedMonth); // Changed to monthly report
+    displayMonthlyReport(filteredExpenses, selectedMonth);
 }
 
 function displayDailyTransactions(expenses) {
     const tbody = document.getElementById('dailyTransactionsBody');
     tbody.innerHTML = '';
 
-    if (expenses.length === 0) {
+    const start = (currentPage - 1) * expensesPerPage;
+    const end = start + expensesPerPage;
+    const paginatedExpenses = expenses.slice(start, end);
+
+    if (paginatedExpenses.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td colspan="5" class="text-center">No transactions found for selected month</td>
@@ -135,9 +171,9 @@ function displayDailyTransactions(expenses) {
         return;
     }
 
-    expenses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    paginatedExpenses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    expenses.forEach(expense => {
+    paginatedExpenses.forEach(expense => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${new Date(expense.createdAt).toLocaleDateString()}</td>
@@ -148,9 +184,10 @@ function displayDailyTransactions(expenses) {
         `;
         tbody.appendChild(row);
     });
+
+    updatePaginationControls(expenses.length);
 }
 
-// New function to display monthly report instead of yearly
 function displayMonthlyReport(expenses, selectedMonth) {
     const tbody = document.getElementById('yearlyReportBody');
     tbody.innerHTML = '';
@@ -213,6 +250,39 @@ function downloadExpenses() {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
+}
+
+function updatePaginationControls(totalExpenses) {
+    const paginationControls = document.getElementById("pagination-controls");
+    paginationControls.innerHTML = ""; // Clear existing controls
+
+    const totalPages = Math.ceil(totalExpenses / expensesPerPage);
+
+    if (currentPage > 1) {
+        const prevButton = document.createElement("button");
+        prevButton.textContent = "Previous";
+        prevButton.className = "btn btn-secondary";
+        prevButton.onclick = () => {
+            currentPage--;
+            updateExpenses();
+        };
+        paginationControls.appendChild(prevButton);
+    }
+
+    const pageInfo = document.createElement("span");
+    pageInfo.textContent = ` Page ${currentPage} of ${totalPages} `;
+    paginationControls.appendChild(pageInfo);
+
+    if (currentPage < totalPages) {
+        const nextButton = document.createElement("button");
+        nextButton.textContent = "Next";
+        nextButton.className = "btn btn-secondary";
+        nextButton.onclick = () => {
+            currentPage++;
+            updateExpenses();
+        };
+        paginationControls.appendChild(nextButton);
+    }
 }
 </script>
 

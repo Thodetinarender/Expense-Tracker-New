@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker - Home</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .pagination {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
         <h2 class="text-center">Expense Tracker</h2>
 
-        <!-- Logout Button (Same as new code) -->
+        <!-- Logout Button -->
         <button onclick="logout()" class="btn btn-danger float-end">Logout</button>
         <button id="buyPremiumBtn" class="btn btn-success" onclick="window.location.href = 'paymentForm.html'">Buy Premium</button>
-
 
         <!-- Expense Form -->
         <div class="mt-4">
@@ -61,56 +65,55 @@
                     <!-- Expenses will be populated here via JavaScript -->
                 </tbody>
             </table>
+
+            <!-- Pagination Controls -->
+            <div class="pagination" id="pagination-controls"></div>
         </div>
     </div>
 
-
     <!-- Premium Status & Show Expenses Button -->
-     <br>
-     <br>
-<div class="text-center mt-4">
-    <h3 id="premiumStatus" class="text-success"></h3>
-    <button id="showTotalExpensesBtn" class="btn btn-primary d-none">Show All Users' Total Expenses</button>
-</div>
+    <br><br>
+    <div class="text-center mt-4">
+        <h3 id="premiumStatus" class="text-success"></h3>
+        <button id="showTotalExpensesBtn" class="btn btn-primary d-none">Show All Users' Total Expenses</button>
+        <button id="showExpensesReportBtn" class="btn btn-primary d-none">Show Expenses Report</button>
+    </div>
 
-<!-- Table to Show All Users' Expenses -->
-<div class="container mt-4" id="totalExpensesContainer" style="display: none;">
-    <h4 class="text-center">All Users' Total Expenses</h4>
-    <table class="table table-bordered mt-3">
-        <thead>
-            <tr>
-                <th>User Name</th>
-                <!-- <th>Email</th> -->
-                <th>Total Expenses (₹)</th>
-            </tr>
-        </thead>
-        <tbody id="totalExpensesTableBody">
-            <!-- Data will be inserted here -->
-        </tbody>
-    </table>
-</div>
-
+    <!-- Table to Show All Users' Expenses -->
+    <div class="container mt-4" id="totalExpensesContainer" style="display: none;">
+        <h4 class="text-center">All Users' Total Expenses</h4>
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>User Name</th>
+                    <th>Total Expenses (₹)</th>
+                </tr>
+            </thead>
+            <tbody id="totalExpensesTableBody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
 
     <script>
-  
+        let currentPage = 1;
+        const expensesPerPage = 10;
+        let expenses = [];
+
         document.addEventListener("DOMContentLoaded", async () => {
             const token = localStorage.getItem("token");
             if (!token) {
                 window.location.href = "/signin.html"; // Redirect to signin if no token
             } else {
                 const user = getUserFromToken();
-            
-            // Check if the user is premium
-            if (user.isPremium) {
-                // If the user is premium, hide the Buy Premium button
-                document.getElementById("buyPremiumBtn").style.display = "none";
-            }
+                if (user.isPremium) {
+                    document.getElementById("buyPremiumBtn").style.display = "none";
+                }
                 await fetchExpenses(); // Load expenses after login
             }
 
             document.getElementById("expenseForm").addEventListener("submit", async (event) => {
                 event.preventDefault();
-
                 const amount = document.getElementById("amount").value;
                 const description = document.getElementById("description").value;
                 const category = document.getElementById("category").value;
@@ -137,7 +140,6 @@
 
         async function fetchExpenses() {
             const token = localStorage.getItem("token");
-
             if (!token) {
                 console.error("No token found. Redirecting to signin.");
                 window.location.href = "/signin.html";
@@ -157,9 +159,8 @@
                     throw new Error(errorData.message || "Failed to fetch expenses");
                 }
 
-                const expenses = await response.json();
-                console.log("Fetched expenses:", expenses);
-                displayExpenses(expenses); // Update UI
+                expenses = await response.json();
+                displayExpenses(); // Update UI
 
             } catch (error) {
                 console.error("Failed to fetch expenses:", error.message);
@@ -167,11 +168,15 @@
             }
         }
 
-        function displayExpenses(expenses) {
+        function displayExpenses() {
             const tableBody = document.querySelector("#expenses-table tbody");
             tableBody.innerHTML = ""; // Clear existing entries
 
-            if (expenses.length === 0) {
+            const start = (currentPage - 1) * expensesPerPage;
+            const end = start + expensesPerPage;
+            const paginatedExpenses = expenses.slice(start, end);
+
+            if (paginatedExpenses.length === 0) {
                 const noDataRow = document.createElement("tr");
                 const noDataCell = document.createElement("td");
                 noDataCell.colSpan = 5; // Span across all columns
@@ -181,7 +186,7 @@
                 return;
             }
 
-            expenses.forEach(expense => {
+            paginatedExpenses.forEach(expense => {
                 const row = document.createElement("tr");
 
                 const amountCell = document.createElement("td");
@@ -213,6 +218,41 @@
 
                 tableBody.appendChild(row);
             });
+
+            updatePaginationControls();
+        }
+
+        function updatePaginationControls() {
+            const paginationControls = document.getElementById("pagination-controls");
+            paginationControls.innerHTML = ""; // Clear existing controls
+
+            const totalPages = Math.ceil(expenses.length / expensesPerPage);
+
+            if (currentPage > 1) {
+                const prevButton = document.createElement("button");
+                prevButton.textContent = "Previous";
+                prevButton.className = "btn btn-secondary";
+                prevButton.onclick = () => {
+                    currentPage--;
+                    displayExpenses();
+                };
+                paginationControls.appendChild(prevButton);
+            }
+
+            const pageInfo = document.createElement("span");
+            pageInfo.textContent = ` Page ${currentPage} of ${totalPages} `;
+            paginationControls.appendChild(pageInfo);
+
+            if (currentPage < totalPages) {
+                const nextButton = document.createElement("button");
+                nextButton.textContent = "Next";
+                nextButton.className = "btn btn-secondary";
+                nextButton.onclick = () => {
+                    currentPage++;
+                    displayExpenses();
+                };
+                paginationControls.appendChild(nextButton);
+            }
         }
 
         async function deleteExpense(expenseId) {
@@ -227,7 +267,7 @@
 
             const data = await response.json();
             alert(data.message);
-            fetchExpenses();
+            await fetchExpenses(); // Refresh expenses after deletion
         }
 
         function logout() {
@@ -235,99 +275,93 @@
             window.location.href = "/signin.html";
         }
 
+        function getUserFromToken() {
+            const token = localStorage.getItem("token");
+            if (!token) return null;
 
-    function getUserFromToken() {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
-
-    try {
-        const payload = JSON.parse(atob(token.split(".")[1])); // Decode JWT payload
-        return payload; // Returns { id, email, isPremium }
-    } catch (error) {
-        console.error("Invalid token:", error);
-        return null;
-    }
-}
-
-
-
-
-document.addEventListener("DOMContentLoaded", async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "/signin.html"; // Redirect if not logged in
-    } else {
-        const user = getUserFromToken();
-        
-        // Check if the user is premium
-        if (user.isPremium) {
-            document.getElementById("premiumStatus").textContent = "🎉 You are a Premium Member!";
-            document.getElementById("showTotalExpensesBtn").classList.remove("d-none"); // Show button
-        }
-
-        await fetchExpenses(); // Fetch user's personal expenses
-    }
-
-    // Event listener for "Show All Users' Total Expenses" button
-    document.getElementById("showTotalExpensesBtn").addEventListener("click", fetchAllUsersTotalExpenses);
-});
-
-// Function to fetch all users' total expenses
-async function fetchAllUsersTotalExpenses() {
-    const token = localStorage.getItem("token");
-
-    try {
-        const response = await fetch("http://localhost:5000/api/total-expenses", {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${token}`
+            try {
+                const payload = JSON.parse(atob(token.split(".")[1])); // Decode JWT payload
+                return payload; // Returns { id, email, isPremium }
+            } catch (error) {
+                console.error("Invalid token:", error);
+                return null;
             }
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to fetch total expenses");
         }
 
-        const usersTotalExpenses = await response.json();
-        displayAllUsersTotalExpenses(usersTotalExpenses); // Call function to display data
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                window.location.href = "/signin.html"; // Redirect if not logged in
+            } else {
+                const user = getUserFromToken();
+                
+                // Check if the user is premium
+                if (user.isPremium) {
+                    document.getElementById("premiumStatus").textContent = "🎉 You are a Premium Member!";
+                    document.getElementById("showTotalExpensesBtn").classList.remove("d-none"); // Show button
+                    document.getElementById("showExpensesReportBtn").classList.remove("d-none"); // Show button
+                }
 
-    } catch (error) {
-        console.error("Error fetching total expenses:", error.message);
-        alert("Error fetching total expenses: " + error.message);
-    }
-}
+                await fetchExpenses(); // Fetch user's personal expenses
+            }
 
-// Function to display total expenses in a table
-function displayAllUsersTotalExpenses(usersTotalExpenses) {
-    const tableBody = document.getElementById("totalExpensesTableBody");
-    tableBody.innerHTML = ""; // Clear existing entries
-
-    if (usersTotalExpenses.length === 0) {
-        const noDataRow = document.createElement("tr");
-        noDataRow.innerHTML = `<td colspan="3" class="text-center">No expenses recorded yet.</td>`;
-        tableBody.appendChild(noDataRow);
-    } else {
-        usersTotalExpenses.forEach(user => {
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-                <td>${user.name}</td>  <!-- Access user.name directly -->
-                <!-- <td>${user.email}</td> --> <!-- Access user.email directly -->
-                <td>₹${user.totalExpense || 0}</td>
-            `;
-
-            tableBody.appendChild(row);
+            // Event listener for "Show All Users' Total Expenses" button
+            document.getElementById("showTotalExpensesBtn").addEventListener("click", fetchAllUsersTotalExpenses);
+            document.getElementById("showExpensesReportBtn").addEventListener("click", () => {
+                window.location.href = "expenses.html"; // Redirect to expenses.html
+            });
         });
-    }
 
-    document.getElementById("totalExpensesContainer").style.display = "block"; // Show table
-}
+        // Function to fetch all users' total expenses
+        async function fetchAllUsersTotalExpenses() {
+            const token = localStorage.getItem("token");
 
+            try {
+                const response = await fetch("http://localhost:5000/api/total-expenses", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
 
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Failed to fetch total expenses");
+                }
 
+                const usersTotalExpenses = await response.json();
+                displayAllUsersTotalExpenses(usersTotalExpenses); // Call function to display data
 
+            } catch (error) {
+                console.error("Error fetching total expenses:", error.message);
+                alert("Error fetching total expenses: " + error.message);
+            }
+        }
 
+        // Function to display total expenses in a table
+        function displayAllUsersTotalExpenses(usersTotalExpenses) {
+            const tableBody = document.getElementById("totalExpensesTableBody");
+            tableBody.innerHTML = ""; // Clear existing entries
+
+            if (usersTotalExpenses.length === 0) {
+                const noDataRow = document.createElement("tr");
+                noDataRow.innerHTML = `<td colspan="3" class="text-center">No expenses recorded yet.</td>`;
+                tableBody.appendChild(noDataRow);
+            } else {
+                usersTotalExpenses.forEach(user => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td>${user.name}</td>
+                        <td>₹${user.totalExpense || 0}</td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            }
+
+            document.getElementById("totalExpensesContainer").style.display = "block"; // Show table
+        }
     </script>
 </body>
 </html>
