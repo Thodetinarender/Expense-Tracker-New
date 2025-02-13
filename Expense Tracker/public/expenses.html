@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Premium User</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Replace the existing expense display section with this new structure -->
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Day to Day Expenses</h1>
+    
+    <!-- Year and Month Selector -->
+    <div class="row mb-4 justify-content-center">
+        <div class="col-md-3">
+            <select id="yearSelect" class="form-select" onchange="updateExpenses()">
+                <!-- Will be populated dynamically -->
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="monthSelect" class="form-select" onchange="updateExpenses()">
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Daily Transactions Table -->
+    <div class="table-responsive mb-5">
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Income</th>
+                    <th>Expense</th>
+                </tr>
+            </thead>
+            <tbody id="dailyTransactionsBody">
+                <!-- Will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Yearly Report -->
+    <h2 class="text-center mb-4">Yearly Report</h2>
+    <div class="table-responsive mb-5">
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Month</th>
+                    <th>Income</th>
+                    <th>Expense</th>
+                    <th>Savings</th>
+                </tr>
+            </thead>
+            <tbody id="yearlyReportBody">
+                <!-- Will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Download Button -->
+    <div class="text-center mb-5">
+        <button id="downloadExpensesBtn" class="btn btn-primary" onclick="downloadExpenses()" disabled>
+            <i class="fas fa-download"></i> Download Report
+        </button>
+    </div>
+</div>
+
+<!-- Add this in your head section for the download icon -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+
+
+
+<!-- Add this to your script section -->
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    // ... existing DOMContentLoaded code ...
+    
+    // Populate year select
+    const currentYear = new Date().getFullYear();
+    const yearSelect = document.getElementById('yearSelect');
+    for(let year = currentYear; year >= currentYear - 5; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+
+    // Set current month in month select
+    document.getElementById('monthSelect').value = new Date().getMonth();
+});
+
+function updateExpenses() {
+    const selectedYear = document.getElementById('yearSelect').value;
+    const selectedMonth = document.getElementById('monthSelect').value;
+    const expenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+
+    // Filter expenses for selected month and year
+    const filteredExpenses = expenses.filter(expense => {
+        const expenseDate = new Date(expense.createdAt);
+        return expenseDate.getFullYear() == selectedYear && 
+               expenseDate.getMonth() == selectedMonth;
+    });
+
+    displayDailyTransactions(filteredExpenses);
+    displayMonthlyReport(filteredExpenses, selectedMonth); // Changed to monthly report
+}
+
+function displayDailyTransactions(expenses) {
+    const tbody = document.getElementById('dailyTransactionsBody');
+    tbody.innerHTML = '';
+
+    if (expenses.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="5" class="text-center">No transactions found for selected month</td>
+        `;
+        tbody.appendChild(row);
+        return;
+    }
+
+    expenses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    expenses.forEach(expense => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${new Date(expense.createdAt).toLocaleDateString()}</td>
+            <td>${expense.description}</td>
+            <td>${expense.category}</td>
+            <td>${expense.type === 'income' ? '₹' + expense.amount : '-'}</td>
+            <td>${expense.type === 'expense' ? '₹' + expense.amount : '-'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// New function to display monthly report instead of yearly
+function displayMonthlyReport(expenses, selectedMonth) {
+    const tbody = document.getElementById('yearlyReportBody');
+    tbody.innerHTML = '';
+
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const income = expenses
+        .filter(e => e.type === 'income')
+        .reduce((sum, e) => sum + Number(e.amount), 0);
+    
+    const expense = expenses
+        .filter(e => e.type === 'expense')
+        .reduce((sum, e) => sum + Number(e.amount), 0);
+
+    const savings = income - expense;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${months[selectedMonth]}</td>
+        <td>₹${income}</td>
+        <td>₹${expense}</td>
+        <td>₹${savings}</td>
+    `;
+    tbody.appendChild(row);
+}
+
+// Update download function to only include selected month
+function downloadExpenses() {
+    const selectedYear = document.getElementById('yearSelect').value;
+    const selectedMonth = document.getElementById('monthSelect').value;
+    const expenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+
+    // Filter for selected month and year
+    const filteredExpenses = expenses.filter(expense => {
+        const expenseDate = new Date(expense.createdAt);
+        return expenseDate.getFullYear() == selectedYear && 
+               expenseDate.getMonth() == selectedMonth;
+    });
+
+    let csvContent = "Date,Description,Category,Income,Expense\n";
+    
+    filteredExpenses.forEach(expense => {
+        const row = [
+            new Date(expense.createdAt).toLocaleDateString(),
+            expense.description,
+            expense.category,
+            expense.type === 'income' ? expense.amount : '',
+            expense.type === 'expense' ? expense.amount : ''
+        ].join(",");
+        csvContent += row + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `expense_report_${selectedYear}_${Number(selectedMonth) + 1}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>
