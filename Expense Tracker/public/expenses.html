@@ -41,6 +41,19 @@
         </div>
     </div>
 
+    <!-- Expenses Per Page Selector -->
+    <div class="row mb-4 justify-content-center">
+        <div class="col-md-3">
+            <label for="expensesPerPageSelect" class="form-label">Expenses per page:</label>
+            <select id="expensesPerPageSelect" class="form-select" onchange="updateExpensesPerPage()">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="40">40</option>
+            </select>
+        </div>
+    </div>
+
     <!-- Daily Transactions Table -->
     <div class="table-responsive mb-5">
         <table class="table table-bordered">
@@ -92,8 +105,14 @@
 
 <script>
 let currentPage = 1;
-const expensesPerPage = 10;
+let expensesPerPage = 10; // Default value
 let expenses = [];
+
+// Load expenses per page from local storage or use default
+const loadExpensesPerPage = () => {
+    const storedValue = localStorage.getItem("expensesPerPage");
+    return storedValue ? parseInt(storedValue) : expensesPerPage;
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
     // Populate year select
@@ -108,6 +127,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Set current month in month select
     document.getElementById('monthSelect').value = new Date().getMonth();
+    
+    // Set expenses per page from local storage
+    expensesPerPage = loadExpensesPerPage();
+    document.getElementById('expensesPerPageSelect').value = expensesPerPage;
 
     // Fetch expenses on load
     await fetchExpenses();
@@ -152,6 +175,15 @@ function updateExpenses() {
 
     displayDailyTransactions(filteredExpenses);
     displayMonthlyReport(filteredExpenses, selectedMonth);
+}
+
+// Update expenses per page based on user selection
+function updateExpensesPerPage() {
+    const selectedValue = document.getElementById('expensesPerPageSelect').value;
+    localStorage.setItem("expensesPerPage", selectedValue);
+    expensesPerPage = parseInt(selectedValue);
+    currentPage = 1; // Reset to first page
+    updateExpenses(); // Refresh the displayed expenses
 }
 
 function displayDailyTransactions(expenses) {
