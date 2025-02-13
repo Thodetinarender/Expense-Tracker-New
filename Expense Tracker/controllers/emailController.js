@@ -10,7 +10,7 @@ dotenv.config();
 // Configure API key authorization
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
 const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
+apiKey.apiKey = process.env.BREVO_API_KEY || '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';
 
 const sendResetEmail = async (email, uuid) => {
     try {
