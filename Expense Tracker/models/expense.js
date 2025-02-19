@@ -23,6 +23,10 @@ const Expense  = sequelize.define('expense', {
         type:Sequelize.STRING,
         allowNull: false
     },
+    type: {
+        type: Sequelize.STRING, // income or expense
+        allowNull: false
+    },
     userId: {
         type: Sequelize.INTEGER,
         allowNull: false

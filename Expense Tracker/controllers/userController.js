@@ -2,8 +2,15 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Expense = require('../models/expense');
+//const { ExpenseReport } = require('../models/ExpenseReport');
+const ExpenseReport = require('../models/ExpenseReport'); // Ensure the path is correct
 const sequelize = require('../util/database');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+const fs = require("fs");
+const path = require("path");
+const { Op } = require("sequelize");
+dotenv.config();
 
 // Generate JWT Token
 const generateToken = (user) => {
@@ -12,7 +19,7 @@ const generateToken = (user) => {
 };
 
 
-exports.signup = async (req, res) => {
+ const signup = async (req, res) => {
     const t = await sequelize.transaction(); // Start transaction
     try {
         const { name, email, password } = req.body;
@@ -44,7 +51,7 @@ exports.signup = async (req, res) => {
 };
 
 
-exports.signin = async (req, res) => {
+const signin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -78,7 +85,7 @@ exports.signin = async (req, res) => {
     }
 };
 
-exports.authenticateToken = (req, res, next) => {
+const authenticateToken = (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
@@ -96,44 +103,42 @@ exports.authenticateToken = (req, res, next) => {
         return res.status(403).json({ message: "Invalid token" });
     }
 };
-
-
-
-
-exports.addExpense =async(req, res) =>{
+// controllers/expenseController.js
+const addExpense = async (req, res) => {
     const t = await sequelize.transaction();
-    try{
-        const {amount, description,category}=req.body;
+    try {
+        const { amount, description, category, type } = req.body;
 
-        if(!amount || !description || !category){
-            return res.status(400).json({ message: "amount, description and category are required" });
+        if (!amount || !description || !category || !type) {
+            return res.status(400).json({ message: "amount, description, category, and type are required" });
         }
-        const newExpense = await Expense.create({amount, description,category, userId: req.user.id }, {transaction:t});
-     
-        // Update totalExpense in User table
-        await User.increment('totalExpense', { 
-            by: amount, 
-            where: { id: req.user.id } ,
-            transaction:t
 
-        });
+        const newExpense = await Expense.create({ amount, description, category, type, userId: req.user.id }, { transaction: t });
 
-        // Commit the transaction
+        if (type === 'expense') {
+            await User.increment(
+                { totalExpense: amount, totalSalary: -amount },
+                { where: { id: req.user.id }, transaction: t }
+            );
+        } else if (type === 'income') {
+            await User.increment(
+                { totalSalary: amount },
+                { where: { id: req.user.id }, transaction: t }
+            );
+        }
+
         await t.commit();
 
-        res.status(201).json({ message: "Expense added successfully", expense: newExpense });
-
-
+        res.status(201).json({ message: "Entry added successfully", expense: newExpense });
     } catch (error) {
-        await t.rollback(); // Rollback if any error occurs
+        await t.rollback();
         console.error(error);
-        res.status(500).json({ message: "Error adding expense" });
+        res.status(500).json({ message: "Error adding entry" });
     }
-
 }
 
 
-exports.deleteExpense = async (req, res) => {
+const deleteExpense = async (req, res) => {
     const t = await sequelize.transaction(); // Start transaction
     try {
         const expenseId = req.params.id;
@@ -147,12 +152,11 @@ exports.deleteExpense = async (req, res) => {
             return res.status(404).json({ message: "Expense not found" });
         }
 
-         // Subtract the deleted expense amount from totalExpense
-         await User.increment('totalExpense', { 
-            by: -expense.amount, 
-            where: { id: req.user.id },
-            transaction: t 
-        });
+         // Subtract the deleted expense amount from totalExpense and increment totalSalary
+         await User.increment(
+            { totalExpense: -expense.amount, totalSalary: expense.amount },
+            { where: { id: req.user.id }, transaction: t }
+        );
 
         // Delete the expense
         await expense.destroy({ transaction: t });
@@ -167,7 +171,7 @@ exports.deleteExpense = async (req, res) => {
     }
 };
 
-exports.expenses = async (req, res) => {
+const expenses = async (req, res) => {
     try {
        // console.log("Fetching expenses for user:", req.user.id);
 
@@ -186,7 +190,7 @@ exports.expenses = async (req, res) => {
     }
 }
 
-exports.getAllUsersTotalExpenses = async (req, res) => {
+const getAllUsersTotalExpenses = async (req, res) => {
     try {
         if (!req.user.isPremium) {
             return res.status(403).json({ message: "Access Denied! Only Premium users can view this." });
@@ -204,4 +208,139 @@ exports.getAllUsersTotalExpenses = async (req, res) => {
         console.error("Error fetching total expenses:", error.message);
         res.status(500).json({ message: "Error fetching total expenses" });
     }
+};
+
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+//const { expenseReportt } = require('./models');  // Adjust the path to your model
+
+
+// AWS S3 client setup
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    }
+});
+
+// Download expense report and upload to S3
+const downloadExpense = async (req, res) => {
+    try {
+        // Ensure `req.user.id` is available
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ message: "Unauthorized: User ID not found" });
+        }
+
+        // Fetch expenses for the logged-in user
+        const expenses = await Expense.findAll({
+            where: { userId: req.user.id }
+        });
+
+        // If no expenses found
+        if (expenses.length === 0) {
+            return res.status(404).json({ message: "No expenses found for the user" });
+        }
+
+        // Convert expenses to CSV format
+        const csv = convertExpensesToCSV(expenses);
+
+        // Set the file name to include a timestamp for uniqueness
+        const fileName = `expense_report_${Date.now()}.csv`;
+
+        // Set S3 parameters using environment variables for your bucket name
+        const s3Params = {
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Key: fileName,
+            Body: csv,
+            ContentType: 'text/csv',
+            ACL: 'public-read'
+        };
+
+        // Create a PutObjectCommand to upload the CSV to S3
+        const uploadCommand = new PutObjectCommand(s3Params);
+
+        // Send the upload command to S3
+        await s3.send(uploadCommand);
+
+         // Generate the file URL
+         const fileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+
+         // Store fileName and fileUrl in the database
+         const expenseReport = await ExpenseReport.create({
+             userId: req.user.id,
+             fileName: fileName,
+             fileUrl: fileUrl
+         });
+ 
+         // Return the URL of the uploaded file
+         res.status(200).json({
+             fileURL: fileUrl,
+             fileName: fileName,
+             userId : expenseReport.id // Optionally return the report ID
+         });
+
+    } catch (error) {
+        console.error("Error generating expense report:", error.message);
+        res.status(500).json({ message: "Error generating expense report", error: error.message });
+    }
+};
+
+// Function to get expense reports for the logged-in user
+const getUserExpenseReports = async (req, res) => {
+    try {
+        // Ensure `req.user.id` is available
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ message: "Unauthorized: User ID not found" });
+        }
+
+        // Fetch expense reports for the logged-in user
+        const reports = await ExpenseReport.findAll({
+            where: { userId: req.user.id }
+        });
+
+        // If no reports found
+        if (reports.length === 0) {
+            return res.status(404).json({ message: "No expense reports found for the user" });
+        }
+
+        // Return the reports
+        res.status(200).json(reports);
+
+    } catch (error) {
+        console.error("Error fetching expense reports:", error.message);
+        res.status(500).json({ message: "Error fetching expense reports", error: error.message });
+    }
+};
+
+// Helper function to convert expenses data into CSV format
+function convertExpensesToCSV(expenses) {
+    const headers = ['Date', 'Description', 'Category', 'Income', 'Expense'];
+
+    const rows = expenses.map(expense => {
+        const date = new Date(expense.createdAt).toLocaleDateString(); // Format the date
+        const income = expense.type === 'income' ? `₹${expense.amount}` : '';
+        const expenseAmount = expense.type === 'expense' ? `₹${expense.amount}` : '';
+        return `${date},${expense.description},${expense.category},${income},${expenseAmount}`;
+    });
+
+    return [headers.join(','), ...rows].join('\n');
+}
+
+
+
+
+
+module.exports = {
+    signup,
+    signin,
+    authenticateToken,
+    addExpense,
+    deleteExpense,
+    expenses,
+    getAllUsersTotalExpenses,
+    downloadExpense,
+    getUserExpenseReports,
+    convertExpensesToCSV
+    
 };

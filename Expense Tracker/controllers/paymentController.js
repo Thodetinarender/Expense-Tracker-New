@@ -1,17 +1,16 @@
-
-import axios from "axios";  
-import { v4 as uuidv4 } from "uuid";
-import jwt from "jsonwebtoken"; // Import JWT for decoding tokens
-import Order from "../models/order.js"; 
-import User from "../models/user.js"; 
-import sequelize from "../util/database.js"; // Import sequelize for transactions
+const axios = require("axios");
+const { v4: uuidv4 } = require("uuid");
+const jwt = require("jsonwebtoken"); // Import JWT for decoding tokens
+const Order = require("../models/order");
+const User = require("../models/user");
+const sequelize = require("../util/database"); // Import sequelize for transactions
 
 // const axios = require("axios");
 // const { v4: uuidv4 } = require("uuid");
 
 const CF_API_URL = "https://sandbox.cashfree.com/pg/orders";  
-const CF_CLIENT_ID = "TEST430329ae80e0f32e41a393d78b923034";  
-const CF_CLIENT_SECRET = "TESTaf195616268bd6202eeb3bf8dc458956e7192a85";  
+const CF_CLIENT_ID = "TEST10468952e5bc5d2a59d4259b055925986401";  
+const CF_CLIENT_SECRET = "cfsk_ma_test_0dcb972bc80736d26f40b4770114fe42_5fb25da5";  
 
 const createOrder = async (req, res) => {
     const t = await sequelize.transaction(); // Start transaction
@@ -224,5 +223,4 @@ const handlePaymentWebhook = async (req, res) => {
     }
 };
 
-
-export { createOrder, getPaymentStatus ,handlePaymentWebhook}; // ✅ Use ES Modules
+module.exports = { createOrder, getPaymentStatus, handlePaymentWebhook }; // ✅ CommonJS syntax

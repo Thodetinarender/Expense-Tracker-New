@@ -15,6 +15,10 @@
 
 <div class="container mt-5">
     <h1 class="text-center mb-4">Day to Day Expenses</h1>
+
+     <!-- Logout Button -->
+     <button onclick="home()" class="btn btn-primary float-start">Back</button>
+
     
     <!-- Year and Month Selector -->
     <div class="row mb-4 justify-content-center">
@@ -99,6 +103,14 @@
             <i class="fas fa-download"></i> Download Report
         </button>
     </div>
+    <!-- Display All Expense Reports -->
+    <h2 class="text-center mb-4">Your Previous Expense Reports</h2>
+    <div id="reportsContainer" class="text-center mb-5">
+        <ul id="reportsList" class="list-group">
+            <!-- Reports will be populated dynamically -->
+        </ul>
+    </div>
+    
 </div>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -134,8 +146,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Fetch expenses on load
     await fetchExpenses();
+    await fetchUserExpenseReports();
 });
 
+        function home() {
+            window.location.href = "/home.html";
+        }
 async function fetchExpenses() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -158,6 +174,8 @@ async function fetchExpenses() {
         expenses = await response.json();
         localStorage.setItem("expenses", JSON.stringify(expenses)); // Store expenses in localStorage
         updateExpenses(); // Update the displayed expenses
+        document.getElementById("downloadExpensesBtn").disabled = false; // Enable download button
+
     } catch (error) {
         console.error("Error fetching expenses:", error);
         alert("Error fetching expenses: " + error.message);
@@ -247,42 +265,90 @@ function displayMonthlyReport(expenses, selectedMonth) {
     tbody.appendChild(row);
 }
 
-// Update download function to only include selected month
-function downloadExpenses() {
-    const selectedYear = document.getElementById('yearSelect').value;
-    const selectedMonth = document.getElementById('monthSelect').value;
-    const expenses = JSON.parse(localStorage.getItem("expenses") || "[]");
+async function downloadExpenses() {
+    try {
+        const token = localStorage.getItem("token");
 
-    // Filter for selected month and year
-    const filteredExpenses = expenses.filter(expense => {
-        const expenseDate = new Date(expense.createdAt);
-        return expenseDate.getFullYear() == selectedYear && 
-               expenseDate.getMonth() == selectedMonth;
-    });
+        // Request the expense report from the backend (which generates & uploads to S3)
+        const response = await fetch("http://localhost:5000/api/download", {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` },
+        });
 
-    let csvContent = "Date,Description,Category,Income,Expense\n";
-    
-    filteredExpenses.forEach(expense => {
-        const row = [
-            new Date(expense.createdAt).toLocaleDateString(),
-            expense.description,
-            expense.category,
-            expense.type === 'income' ? expense.amount : '',
-            expense.type === 'expense' ? expense.amount : ''
-        ].join(",");
-        csvContent += row + "\n";
-    });
+        if (!response.ok) {
+            throw new Error("Failed to generate expense report");
+        }
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `expense_report_${selectedYear}_${Number(selectedMonth) + 1}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+        const data = await response.json();
+
+        if (!data.fileURL) {
+            throw new Error("File URL not received");
+        }
+
+        // Download the file from S3
+        const a = document.createElement("a");
+        a.href = data.fileURL;
+        a.download = "expense_report.csv"; // You can change the name of the report if needed
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+
+    } catch (error) {
+        console.error("Error downloading expenses:", error.message);
+        alert("Error downloading expenses. Please try again.");
+    }
 }
+
+async function fetchUserExpenseReports() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "/signin.html"; // Redirect if not logged in
+        return;
+    }
+
+    try {
+        const response = await fetch("http://localhost:5000/api/reports", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch expense reports");
+        }
+
+        const reports = await response.json();
+        console.log("Expense Reports:", reports);
+
+        // Display the reports in the UI
+        const reportsList = document.getElementById("reportsList");
+        reportsList.innerHTML = ''; // Clear previous content
+
+      // Check if reports are available
+        if (reports.length > 0) {
+            reports.forEach(report => {
+                const listItem = document.createElement("li");
+                listItem.className = "list-group-item";
+                const reportDate = new Date(report.createdAt).toLocaleDateString(); // Format the date
+                listItem.innerHTML = `
+                    <strong>File Name:</strong> ${report.fileName} <br>
+                    <strong>Date:</strong> ${reportDate} <br>
+                    <a href="${report.fileUrl}" target="_blank">Download Report for View</a>
+                `;
+                reportsList.appendChild(listItem);
+            });
+        }else {
+            reportsList.innerHTML = '<li class="list-group-item">No expense reports found.</li>';
+        }
+
+    } catch (error) {
+        console.error("Error fetching expense reports:", error);
+        alert("Error fetching expense reports: " + error.message);
+    }
+}
+
 
 function updatePaginationControls(totalExpenses) {
     const paginationControls = document.getElementById("pagination-controls");

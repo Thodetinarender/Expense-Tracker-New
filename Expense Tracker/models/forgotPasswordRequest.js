@@ -1,12 +1,11 @@
-import { Sequelize } from 'sequelize';
-import sequelize from '../util/database.js';
-import User from './user.js';
-import { v4 as uuidv4 } from 'uuid';
+const Sequelize = require('sequelize');
+const sequelize = require('../util/database');
+const User = require('../models/user');
 
 const ForgotPasswordRequest = sequelize.define('forgotPasswordRequest', {
     id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
+        defaultValue: Sequelize.UUIDV4, // Sequelize generates UUID
         allowNull: false,
         primaryKey: true
     },
@@ -29,4 +28,5 @@ const ForgotPasswordRequest = sequelize.define('forgotPasswordRequest', {
 ForgotPasswordRequest.belongsTo(User, { foreignKey: 'userId' });
 User.hasMany(ForgotPasswordRequest, { foreignKey: 'userId' });
 
-export default ForgotPasswordRequest;
+// Correct CommonJS export
+module.exports = ForgotPasswordRequest;

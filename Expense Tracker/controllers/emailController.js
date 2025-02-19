@@ -1,16 +1,16 @@
 
-import SibApiV3Sdk from "sib-api-v3-sdk";
-import User from "../models/user.js";
-import ForgotPasswordRequest from "../models/forgotPasswordRequest.js";
-import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
+const SibApiV3Sdk = require("sib-api-v3-sdk");
+const User = require("../models/user");
+const ForgotPasswordRequest = require("../models/forgotPasswordRequest");
+const bcrypt = require("bcryptjs");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
 // Configure API key authorization
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
 const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY || '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';
+apiKey.apiKey = process.env.BREVO_API_KEY;// || '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';
 
 const sendResetEmail = async (email, uuid) => {
     try {
@@ -62,7 +62,7 @@ const sendResetEmail = async (email, uuid) => {
     }
 };
 
-export const forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
         
@@ -103,12 +103,14 @@ export const forgotPassword = async (req, res) => {
 };
 
 // ... rest of your code ...
-export const resetPassword = async (req, res) => {
+const resetPassword = async (req, res) => {
     try {
+        console.log("Reset password request received:", req.body); // Log the request body
         const { uuid } = req.params;
         const { newPassword } = req.body;
 
         if (!uuid || !newPassword) {
+            console.log("Missing uuid or newPassword");
             return res.status(400).json({
                 success: false,
                 message: "Reset token and new password are required"
@@ -124,6 +126,7 @@ export const resetPassword = async (req, res) => {
         });
 
         if (!resetRequest) {
+            console.log("Invalid or expired reset link");
             return res.status(404).json({
                 success: false,
                 message: "Invalid or expired reset link"
@@ -132,6 +135,7 @@ export const resetPassword = async (req, res) => {
 
         const user = await User.findByPk(resetRequest.userId);
         if (!user) {
+            console.log("User not found for reset request");
             return res.status(404).json({
                 success: false,
                 message: "User not found"
@@ -143,7 +147,7 @@ export const resetPassword = async (req, res) => {
 
         // Deactivate the reset request
         await resetRequest.update({ isActive: false });
-
+        console.log("Password updated successfully for user:", user.id);
         res.status(200).json({
             success: true,
             message: "Password updated successfully!"
@@ -156,3 +160,6 @@ export const resetPassword = async (req, res) => {
         });
     }
 };
+
+
+module.exports = { sendResetEmail, forgotPassword, resetPassword }; // ✅ CommonJS syntax

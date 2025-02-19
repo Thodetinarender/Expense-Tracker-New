@@ -1,9 +1,9 @@
-import express from 'express';
-import { forgotPassword, resetPassword } from '../controllers/emailController.js';
+const express = require("express");
+const emailController = require("../controllers/emailController");
 
 const router = express.Router();
 
-router.post('/forgot', forgotPassword);
-router.post('/resetpassword/:uuid', resetPassword);
+router.post('/forgot', emailController.forgotPassword);
+router.post('/resetpassword/:uuid', emailController.resetPassword);
 
-export default router;
+module.exports = router;

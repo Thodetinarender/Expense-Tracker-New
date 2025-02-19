@@ -19,12 +19,21 @@
         <button onclick="logout()" class="btn btn-danger float-end">Logout</button>
         <button id="buyPremiumBtn" class="btn btn-success" onclick="window.location.href = 'paymentForm.html'">Buy Premium</button>
 
-        <!-- Expense Form -->
+        <!-- Type Selector -->
+        <div class="mt-4 text-center">
+            <label for="typeSelect" class="form-label">Select Type:</label>
+            <select id="typeSelect" class="form-select" style="max-width: 200px; margin: 0 auto;">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+            </select>
+        </div>
+
+        <!-- Expense/Income Form -->
         <div class="mt-4">
-            <h4 class="text-center">Add Expense</h4>
+            <h4 class="text-center" id="formTitle">Add Expense</h4>
             <form id="expenseForm" style="max-width: 500px; margin: 0 auto;">
                 <div class="mb-3">
-                    <label for="amount" class="form-label">Choose Expense Amount</label>
+                    <label for="amount" class="form-label">Choose Amount</label>
                     <input type="number" class="form-control" id="amount" required>
                 </div>
 
@@ -36,18 +45,14 @@
                 <div class="mb-3">
                     <label for="category" class="form-label">Category</label>
                     <select id="category" class="form-select" required>
-                        <option value="Food">Food</option>
-                        <option value="Transport">Transport</option>
-                        <option value="Shopping">Shopping</option>
-                        <option value="Other">Other</option>
+                        <!-- Options will be populated by JavaScript -->
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">Add Expense</button>
+                <button type="submit" class="btn btn-primary w-100" id="submitButton">Add Expense</button>
             </form>
         </div>
 
-        
         <!-- Expenses Per Page Selector -->
         <div class="row mb-4 justify-content-center">
             <div class="col-md-3">
@@ -61,11 +66,9 @@
             </div>
         </div>
         
-    
         <!-- Expense Table -->
         <div class="container mt-5">
             <h4 class="text-center">Your Expenses</h4>
-
             <table class="table table-bordered mt-3" id="expenses-table">
                 <thead>
                     <tr>
@@ -102,9 +105,7 @@
                 <tr>
                     <th>User Name</th>
                     <th>Total Expenses (₹)</th>
-                </tr
-
->
+                </tr>
             </thead>
             <tbody id="totalExpensesTableBody">
                 <!-- Data will be inserted here -->
@@ -114,75 +115,78 @@
 
     <script>
         let currentPage = 1;
-        let expensesPerPage = 10; // Default value
-let expenses = [];
-
-// Function to load user's preference for expenses per page
-const loadExpensesPerPage = () => {
-    const storedValue = localStorage.getItem("expensesPerPage");
-    return storedValue ? parseInt(storedValue) : expensesPerPage;
-};
-
-// Function to update expenses per page based on user selection
-function updateExpensesPerPage() {
-    const selectedValue = document.getElementById("expensesPerPageSelect").value;
-    localStorage.setItem("expensesPerPage", selectedValue); // Store preference
-    expensesPerPage = parseInt(selectedValue);
-    currentPage = 1; // Reset to first page
-    displayExpenses(); // Refresh the displayed expenses
-}
-
-
+        let expensesPerPage = 10;
+        let expenses = [];
 
         document.addEventListener("DOMContentLoaded", async () => {
             const token = localStorage.getItem("token");
             if (!token) {
-                window.location.href = "/signin.html"; // Redirect to signin if no token
+                window.location.href = "/signin.html";
             } else {
                 const user = getUserFromToken();
-                console.log("User from token:", user); // Debugging line
                 if (user.isPremium) {
                     document.getElementById("buyPremiumBtn").style.display = "none";
                     document.getElementById("premiumStatus").textContent = "🎉 You are a Premium Member!";
-                    document.getElementById("showTotalExpensesBtn").classList.remove("d-none"); // Show button
-                    document.getElementById("showExpensesReportBtn").classList.remove("d-none"); // Show button
+                    document.getElementById("showTotalExpensesBtn").classList.remove("d-none");
+                    document.getElementById("showExpensesReportBtn").classList.remove("d-none");
                 }
-                // Load user preference for expenses per page
-    expensesPerPage = loadExpensesPerPage();
-    document.getElementById("expensesPerPageSelect").value = expensesPerPage;
 
-    // Add event listener for dropdown change
-    document.getElementById("expensesPerPageSelect").addEventListener("change", updateExpensesPerPage);
+                expensesPerPage = loadExpensesPerPage();
+                document.getElementById("expensesPerPageSelect").value = expensesPerPage;
+                document.getElementById("expensesPerPageSelect").addEventListener("change", updateExpensesPerPage);
 
-                await fetchExpenses(); // Load expenses after login
-            }
+                await fetchExpenses();
 
-            document.getElementById("expenseForm").addEventListener("submit", async (event) => {
-                event.preventDefault();
-                const amount = document.getElementById("amount").value;
-                const description = document.getElementById("description").value;
-                const category = document.getElementById("category").value;
+                document.getElementById("expenseForm").addEventListener("submit", async (event) => {
+                    event.preventDefault();
+                    const amount = document.getElementById("amount").value;
+                    const description = document.getElementById("description").value;
+                    const category = document.getElementById("category").value;
+                    const type = document.getElementById("typeSelect").value;
 
-                const response = await fetch("http://localhost:5000/api/add-expense", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}` // Ensure token is sent
-                    },
-                    body: JSON.stringify({ amount, description, category
+                    const response = await fetch("http://localhost:5000/api/add-expense", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ amount, description, category, type })
+                    });
 
- })
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert("Entry added successfully!");
+                        document.getElementById("expenseForm").reset();
+                        await fetchExpenses();
+                    } else {
+                        alert("Failed to add entry: " + data.message);
+                    }
                 });
+            }
+        });
 
-                const data = await response.json();
-                if (response.ok) {
-                    alert("Expense added successfully!");
-                    document.getElementById("expenseForm").reset(); // Clear form
-                    await fetchExpenses(); // Fetch updated expenses list
-                } else {
-                    alert("Failed to add expense: " + data.message);
-                }
-            });
+        document.getElementById("typeSelect").addEventListener("change", (event) => {
+            const type = event.target.value;
+            const categorySelect = document.getElementById("category");
+            categorySelect.innerHTML = "";
+
+            if (type === "income") {
+                document.getElementById("formTitle").textContent = "Add Income";
+                document.getElementById("submitButton").textContent = "Add Income";
+                categorySelect.innerHTML = `
+                    <option value="Salary">Salary</option>
+                    <option value="Others">Others</option>
+                `;
+            } else {
+                document.getElementById("formTitle").textContent = "Add Expense";
+                document.getElementById("submitButton").textContent = "Add Expense";
+                categorySelect.innerHTML = `
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Other">Other</option>
+                `;
+            }
         });
 
         async function fetchExpenses() {
@@ -207,8 +211,7 @@ function updateExpensesPerPage() {
                 }
 
                 expenses = await response.json();
-                console.log("Fetched expenses:", expenses); // Debugging line
-                displayExpenses(); // Update UI
+                displayExpenses();
 
             } catch (error) {
                 console.error("Failed to fetch expenses:", error.message);
@@ -218,7 +221,7 @@ function updateExpensesPerPage() {
 
         function displayExpenses() {
             const tableBody = document.querySelector("#expenses-table tbody");
-            tableBody.innerHTML = ""; // Clear existing entries
+            tableBody.innerHTML = "";
 
             const start = (currentPage - 1) * expensesPerPage;
             const end = start + expensesPerPage;
@@ -227,8 +230,8 @@ function updateExpensesPerPage() {
             if (paginatedExpenses.length === 0) {
                 const noDataRow = document.createElement("tr");
                 const noDataCell = document.createElement("td");
-                noDataCell.colSpan = 5; // Span across all columns
-                noDataCell.textContent = "Noexpenses found.";
+                noDataCell.colSpan = 5;
+                noDataCell.textContent = "No expenses found.";
                 noDataRow.appendChild(noDataCell);
                 tableBody.appendChild(noDataRow);
                 return;
@@ -253,7 +256,6 @@ function updateExpensesPerPage() {
                 dateCell.textContent = new Date(expense.createdAt).toLocaleDateString();
                 row.appendChild(dateCell);
 
-                // Delete Button
                 const actionsCell = document.createElement("td");
                 const deleteButton = document.createElement("button");
                 deleteButton.textContent = "Delete";
@@ -272,7 +274,7 @@ function updateExpensesPerPage() {
 
         function updatePaginationControls() {
             const paginationControls = document.getElementById("pagination-controls");
-            paginationControls.innerHTML = ""; // Clear existing controls
+            paginationControls.innerHTML = "";
 
             const totalPages = Math.ceil(expenses.length / expensesPerPage);
 
@@ -288,7 +290,7 @@ function updateExpensesPerPage() {
             }
 
             const pageInfo = document.createElement("span");
-            pageInfo.textContent = ` Page${currentPage} of ${totalPages} `;
+            pageInfo.textContent = ` Page ${currentPage} of ${totalPages} `;
             paginationControls.appendChild(pageInfo);
 
             if (currentPage < totalPages) {
@@ -315,7 +317,20 @@ function updateExpensesPerPage() {
 
             const data = await response.json();
             alert(data.message);
-            await fetchExpenses(); // Refresh expenses after deletion
+            await fetchExpenses();
+        }
+
+        function loadExpensesPerPage() {
+            const storedValue = localStorage.getItem("expensesPerPage");
+            return storedValue ? parseInt(storedValue) : expensesPerPage;
+        }
+
+        function updateExpensesPerPage() {
+            const selectedValue = document.getElementById("expensesPerPageSelect").value;
+            localStorage.setItem("expensesPerPage", selectedValue);
+            expensesPerPage = parseInt(selectedValue);
+            currentPage = 1;
+            displayExpenses();
         }
 
         function logout() {
@@ -328,21 +343,19 @@ function updateExpensesPerPage() {
             if (!token) return null;
 
             try {
-                const payload = JSON.parse(atob(token.split(".")[1])); // Decode JWT payload
-                return payload; // Returns { id, email, isPremium }
+                const payload = JSON.parse(atob(token.split(".")[1]));
+                return payload;
             } catch (error) {
                 console.error("Invalid token:", error);
                 return null;
             }
         }
 
-        // Event listener for "Show All Users' Total Expenses" button
         document.getElementById("showTotalExpensesBtn").addEventListener("click", fetchAllUsersTotalExpenses);
         document.getElementById("showExpensesReportBtn").addEventListener("click", () => {
-            window.location.href = "expenses.html"; // Redirect to expenses.html
+            window.location.href = "expenses.html";
         });
 
-        // Function to fetch all users' total expenses
         async function fetchAllUsersTotalExpenses() {
             const token = localStorage.getItem("token");
 
@@ -360,7 +373,7 @@ function updateExpensesPerPage() {
                 }
 
                 const usersTotalExpenses = await response.json();
-                displayAllUsersTotalExpenses(usersTotalExpenses); // Call function to display data
+                displayAllUsersTotalExpenses(usersTotalExpenses);
 
             } catch (error) {
                 console.error("Error fetching total expenses:", error.message);
@@ -368,15 +381,13 @@ function updateExpensesPerPage() {
             }
         }
 
-        // Function to display total expenses in a table
         function displayAllUsersTotalExpenses(usersTotalExpenses) {
             const tableBody = document.getElementById("totalExpensesTableBody");
-            tableBody.innerHTML = ""; // Clear existing entries
+            tableBody.innerHTML = "";
 
             if (usersTotalExpenses.length === 0) {
                 const noDataRow = document.createElement("tr");
-                noDataRow.innerHTML = `<td colspan="3" class="text-center">
-                    No expenses recorded yet.</td>`;
+                noDataRow.innerHTML = `<td colspan="2" class="text-center">No expenses recorded yet.</td>`;
                 tableBody.appendChild(noDataRow);
             } else {
                 usersTotalExpenses.forEach(user => {
@@ -391,7 +402,7 @@ function updateExpensesPerPage() {
                 });
             }
 
-            document.getElementById("totalExpensesContainer").style.display = "block"; // Show table
+            document.getElementById("totalExpensesContainer").style.display = "block";
         }
     </script>
 </body>

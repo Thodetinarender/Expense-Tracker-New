@@ -1,9 +1,10 @@
-import express from "express";
-import { createOrder, getPaymentStatus, handlePaymentWebhook } from "../controllers/paymentController.js";
+const express = require("express");
+const paymentController = require("../controllers/paymentController");
 
 const router = express.Router();
-router.post("/create-order", createOrder);
-router.get("/status", getPaymentStatus);
-router.post("/webhook", handlePaymentWebhook); // Webhook endpoint
 
-export default router; // ✅ Use ES Modules
+router.post("/create-order", paymentController.createOrder);
+router.get("/status", paymentController.getPaymentStatus);
+router.post("/webhook", paymentController.handlePaymentWebhook); // Webhook endpoint
+
+module.exports = router; // ✅ CommonJS export
