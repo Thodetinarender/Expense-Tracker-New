@@ -8,9 +8,9 @@ const sequelize = require("../util/database"); // Import sequelize for transacti
 // const axios = require("axios");
 // const { v4: uuidv4 } = require("uuid");
 
-const CF_API_URL = 
-const CF_CLIENT_ID =   
-const CF_CLIENT_SECRET = 
+const CF_API_URL = process.env.CF_API_URL;
+const CF_CLIENT_ID = process.env.CF_CLIENT_ID;   
+const CF_CLIENT_SECRET = process.env.CF_CLIENT_ID;
 
 const createOrder = async (req, res) => {
     const t = await sequelize.transaction(); // Start transaction

@@ -14,7 +14,7 @@ dotenv.config();
 
 // Generate JWT Token
 const generateToken = (user) => {
-    const secret = process.env.JWT_SECRET || 'defaultSecretKey123'; // Fallback secret
+    const secret = process.env.JWT_SECRET; // Fallback secret
     return jwt.sign({ id: user.id, email: user.email }, secret, { expiresIn: '1h' });
 };
 
