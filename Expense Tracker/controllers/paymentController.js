@@ -32,9 +32,9 @@ const createOrder = async (req, res) => {
         }
 
         const userId = user.id;
-        const customerName = user.name || "Unknown User"; 
-        const customerEmail = user.email || "noemail@example.com"; 
-        const customerPhone = "9876543210"; 
+        const customerName = user.name ; 
+        const customerEmail = user.email; 
+        const customerPhone = user.customerPhone; 
 
         const orderId = `ORDER_${uuidv4()}`; 
 

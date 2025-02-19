@@ -22,7 +22,7 @@ const sendResetEmail = async (email, uuid) => {
 
         // Configure the email
         sendSmtpEmail.sender = {
-            email: "tnr123457@gmail.com",
+            email: "",
             name: "Expense Tracker"
         };
         sendSmtpEmail.to = [{ email }];
