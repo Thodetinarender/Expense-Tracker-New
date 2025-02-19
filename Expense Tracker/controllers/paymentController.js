@@ -8,9 +8,9 @@ const sequelize = require("../util/database"); // Import sequelize for transacti
 // const axios = require("axios");
 // const { v4: uuidv4 } = require("uuid");
 
-const CF_API_URL = "https://sandbox.cashfree.com/pg/orders";  
-const CF_CLIENT_ID = "TEST10468952e5bc5d2a59d4259b055925986401";  
-const CF_CLIENT_SECRET = "cfsk_ma_test_0dcb972bc80736d26f40b4770114fe42_5fb25da5";  
+const CF_API_URL = 
+const CF_CLIENT_ID =   
+const CF_CLIENT_SECRET = 
 
 const createOrder = async (req, res) => {
     const t = await sequelize.transaction(); // Start transaction
