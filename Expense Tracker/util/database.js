@@ -1,9 +1,7 @@
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('expense_tracker', 'root', 'root', {
+const sequelize = new Sequelize('expense-tracker', 'admin', 'Narender123', {
     dialect: 'mysql',
-    host: 'localhost',
-    port: 3307
+    host: expense-tracker.cns4giie008o.ap-south-1.rds.amazonaws.com,
+    port: 3306
 });
-
-module.exports = sequelize;
