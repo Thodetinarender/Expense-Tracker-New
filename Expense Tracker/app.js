@@ -15,7 +15,7 @@ const app = express();
 
 // Middleware to log the beginning of each request
 app.use((req, res, next) => {
-  //console.log(`Received request: ${req.method} ${req.url}`);
+  console.log(`Received request: ${req.method} ${req.url}`);
   next();
 });
 
