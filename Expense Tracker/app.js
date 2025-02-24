@@ -99,7 +99,7 @@ app.get("/payment/response", (req, res) => {
 });
 
 sequelize.sync()
-  .then(() => console.log("Database synced and successfully"))
+  .then(() => console.log("Database synced and also successfully"))
   .catch((err) => console.error("Error syncing database:", err));
 
 app.listen(5000, () => console.log("Server running on http://localhost:5000"));
