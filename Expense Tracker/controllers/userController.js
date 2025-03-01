@@ -14,7 +14,7 @@ dotenv.config();
 
 // Generate JWT Token
 const generateToken = (user) => {
-    const secret = process.env.JWT_SECRET || 'defaultSecretKey123'; // Fallback secret
+    const secret = process.env.JWT_SECRET; // Fallback secret
     return jwt.sign({ id: user.id, email: user.email }, secret, { expiresIn: '1h' });
 };
 
@@ -217,8 +217,8 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const s3 = new S3Client({
     region: process.env.AWS_REGION || "ap-south-1", // Set default if undefined
     credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "AKIAZI2LDRTUCAV6NYPQ", 
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "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",
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     }
 });
 

@@ -8,9 +8,9 @@ const sequelize = require("../util/database"); // Import sequelize for transacti
 // const axios = require("axios");
 // const { v4: uuidv4 } = require("uuid");
 
-const CF_API_URL = "https://sandbox.cashfree.com/pg/orders";  
-const CF_CLIENT_ID = "TEST10468952e5bc5d2a59d4259b055925986401";  
-const CF_CLIENT_SECRET = "cfsk_ma_test_0dcb972bc80736d26f40b4770114fe42_5fb25da5";  
+const CF_API_URL = process.env.CF_API_URL;  
+const CF_CLIENT_ID = process.env.CASHFREE_API_ID;  
+const CF_CLIENT_SECRET = process.env.CASHFREE_SECURITY_KEY;  
 
 const createOrder = async (req, res) => {
     const t = await sequelize.transaction(); // Start transaction
@@ -26,15 +26,15 @@ const createOrder = async (req, res) => {
 
         let user;
         try {
-            user = jwt.verify(token, process.env.JWT_SECRET || 'defaultSecretKey123');
+            user = jwt.verify(token, process.env.JWT_SECRET);
         } catch (err) {
             return res.status(401).json({ message: "Invalid or expired token" });
         }
 
         const userId = user.id;
         const customerName = user.name || "Unknown User"; 
-        const customerEmail = user.email || "noemail@example.com"; 
-        const customerPhone = "9876543210"; 
+        const customerEmail = user.email || process.env.DEFAULT_EMAIL; 
+        const customerPhone = process.env.DEFAULT_PHONE; 
 
         const orderId = `ORDER_${uuidv4()}`; 
 
