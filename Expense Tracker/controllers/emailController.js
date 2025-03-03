@@ -25,6 +25,7 @@ const sendResetEmail = async (email, uuid) => {
             email: process.env.BREVO_SENDER_EMAIL,
             name: "Expense Tracker"
         };
+        
         sendSmtpEmail.to = [{ email }];
         sendSmtpEmail.subject = "Reset Your Password";
         
