@@ -16,16 +16,14 @@ const sendResetEmail = async (email, uuid) => {
     try {
         // Create a new TransactionalEmailsApi instance
         const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
         // Create SendSmtpEmail object
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
         // Configure the email
         sendSmtpEmail.sender = {
             email: process.env.BREVO_SENDER_EMAIL,
             name: "Expense Tracker"
         };
-        
+
         sendSmtpEmail.to = [{ email }];
         sendSmtpEmail.subject = "Reset Your Password";
         
