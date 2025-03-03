@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ::1 - - [14/Feb/2025:03:50:27 +0000] "GET /password/resetpassword/febc2828-3d2b-46ae-ab94-345777292a57 HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
 ::1 - - [14/Feb/2025:03:50:40 +0000] "GET /password/resetpassword/febc2828-3d2b-46ae-ab94-345777292a57? HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
 ::1 - - [16/Feb/2025:05:45:31 +0000] "GET /password/resetpassword/febc2828-3d2b-46ae-ab94-345777292a57? HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
@@ -658,3 +659,6 @@
 ::1 - - [01/Mar/2025:11:31:43 +0000] "GET /home.html HTTP/1.1" 304 - "http://localhost:5000/expenses.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
 ::1 - - [01/Mar/2025:11:31:44 +0000] "GET /api/expenses HTTP/1.1" 304 - "http://localhost:5000/home.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
 ::1 - - [01/Mar/2025:11:31:47 +0000] "GET /signin.html HTTP/1.1" 304 - "http://localhost:5000/home.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+=======
+
+>>>>>>> f6cfc7125e009f8924a626903576282472123140
