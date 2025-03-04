@@ -158,8 +158,9 @@ footer {
                 return;
             }
 
-            fetch(`http://localhost:5000/api/payment/status?order_id=${orderId}`)
-                .then(response => response.json())
+         //   fetch(`http://localhost:5000/api/payment/status?order_id=${orderId}`)
+            fetch(`http://65.0.178.125:5000/api/payment/status?order_id=${orderId}`)
+            .then(response => response.json())
                 .then(data => {
                     document.getElementById("status").innerText = data.status === "PAID" 
                         ? "Payment Successful!" 
