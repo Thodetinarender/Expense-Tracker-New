@@ -9,7 +9,6 @@ const emailRoutes = require("./routes/emailRoutes");
 const sequelize = require("./util/database");
 const morgan = require("morgan");
 
-
 const app = express();
 
 app.use(cors());
@@ -17,7 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-// Create a write stream (in append mode) for logging requests to a file
+// hi Create a write stream (in append mode) for logging requests to a file
 const accessLogStream = fs.createWriteStream(path.join(__dirname, "access.log"), { flags: "a" });
 
 // Setup Morgan for logging
