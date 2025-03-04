@@ -37,7 +37,7 @@
             }
     
             try {
-                const response = await fetch("http://localhost:5000/api/payment/create-order", {
+                const response = await fetch("http://65.0.178.125:5000/api/payment/create-order", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -64,7 +64,7 @@
                     // (Optional) You could also check payment status on your server after checkout
                     window.addEventListener("beforeunload", function() {
                         // In case the page is unloaded, we can trigger a check for the payment status
-                        fetch(`http://localhost:5000/api/payment/status?order_id=${data.order_id}`)
+                        fetch(`http://65.0.178.125:5000/api/payment/status?order_id=${data.order_id}`)
                             .then(response => response.json())
                             .then(statusData => {
                                 if (statusData.status === 'FAILED') {

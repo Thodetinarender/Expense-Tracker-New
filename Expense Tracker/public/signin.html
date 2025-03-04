@@ -54,7 +54,8 @@
     const password = document.getElementById("password").value;
 
     try {
-        const response = await fetch("http://localhost:5000/api/signin", {
+        //const response = await fetch("http://localhost:5000/api/signin", {
+        const response = await fetch("http://65.0.178.125:5000/api/signin", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
