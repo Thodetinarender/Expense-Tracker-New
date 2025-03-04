@@ -38,7 +38,7 @@
             <p style="text-align: center;">Already have an account? <a href="/signin.html">Sign In</a></p>
         </div>
 
-         <!-- Modified this section to be in its own div -->
+         <!--hi Modified this section to be in its own div -->
          <div id="authLinks" class="mt-3 text-center">
             <p>Don't have an account? <a href="/signup.html">Sign Up</a></p>
             <p><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
@@ -54,8 +54,7 @@
     const password = document.getElementById("password").value;
 
     try {
-        //const response = await fetch("http://localhost:5000/api/signin", {
-        const response = await fetch("http://65.0.178.125:5000/api/signin", {
+        const response = await fetch("http://localhost:5000/api/signin", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

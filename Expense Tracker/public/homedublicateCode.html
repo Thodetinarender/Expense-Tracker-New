@@ -118,7 +118,7 @@
                 const description = document.getElementById("description").value;
                 const category = document.getElementById("category").value;
 
-                const response = await fetch("http://65.0.178.125:5000/api/add-expense", {
+                const response = await fetch("http://localhost:5000/api/add-expense", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -147,7 +147,7 @@
             }
 
             try {
-                const response = await fetch("http://65.0.178.125:5000/api/expenses", {
+                const response = await fetch("http://localhost:5000/api/expenses", {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`
@@ -258,7 +258,7 @@
         async function deleteExpense(expenseId) {
             const token = localStorage.getItem("token");
 
-            const response = await fetch(`http://65.0.178.125:5000/api/expense/${expenseId}`, {
+            const response = await fetch(`http://localhost:5000/api/expense/${expenseId}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`
@@ -317,7 +317,7 @@
             const token = localStorage.getItem("token");
 
             try {
-                const response = await fetch("http://65.0.178.125:5000/api/total-expenses", {
+                const response = await fetch("http://localhost:5000/api/total-expenses", {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`
