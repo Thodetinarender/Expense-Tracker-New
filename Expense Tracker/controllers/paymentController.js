@@ -50,8 +50,10 @@ const createOrder = async (req, res) => {
                 customer_phone: customerPhone, 
             },
             order_meta: {
-                return_url: `http://localhost:5000/payment/response?order_id=${orderId}`,
-                notify_url: "http://localhost:5000/api/payment/webhook", // Webhook URL for notification
+               // return_url: `http://localhost:5000/payment/response?order_id=${orderId}`,
+               // notify_url: "http://localhost:5000/api/payment/webhook", // Webhook URL for notification
+                return_url: `http://65.0.178.125:5000/payment/response?order_id=${orderId}`,
+                notify_url: "http://65.0.178.125:5000/api/payment/webhook", // Webhook URL for notification           
             },
             order_splits: [],
         };
@@ -96,7 +98,8 @@ const createOrder = async (req, res) => {
             { transaction: t }
         );
             await t.commit();
-            return res.redirect(`http://localhost:5000/payment/response?order_id=${orderId}`); // Redirect on failure
+            //return res.redirect(`http://localhost:5000/payment/response?order_id=${orderId}`); // Redirect on failure
+            return res.redirect(`http://65.0.178.125:5000/payment/response?order_id=${orderId}`); // Redirect on failure
         }
     } catch (error) {
         await t.rollback(); // Rollback on error

@@ -27,7 +27,8 @@ const sendResetEmail = async (email, uuid) => {
         sendSmtpEmail.to = [{ email }];
         sendSmtpEmail.subject = "Reset Your Password";
         
-        const resetLink = `http://localhost:5000/password/resetpassword/${uuid}`;
+       // const resetLink = `http://localhost:5000/password/resetpassword/${uuid}`;
+        const resetLink = `http://65.0.178.125:5000/password/resetpassword/${uuid}`;
         
         sendSmtpEmail.htmlContent = `
             <html>
