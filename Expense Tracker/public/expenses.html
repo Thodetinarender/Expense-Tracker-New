@@ -161,7 +161,7 @@ async function fetchExpenses() {
 
     try {
     //    const response = await fetch("http://localhost:5000/api/expenses", {
-        const response = await fetch("http://65.0.178.125:5000/api/expenses", {
+        const response = await fetch("http://13.201.227.231:5000/api/expenses", {
                 method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`
@@ -272,7 +272,7 @@ async function downloadExpenses() {
 
         // Request the expense report from the backend (which generates & uploads to S3)
      // const response = await fetch("http://localhost:5000/api/download", {
-        const response = await fetch("http://65.0.178.125:5000/api/download", {
+        const response = await fetch("http://13.201.227.231:5000/api/download", {
                 method: "GET",
             headers: { "Authorization": `Bearer ${token}` },
         });
@@ -311,7 +311,7 @@ async function fetchUserExpenseReports() {
 
     try {
     //    const response = await fetch("http://localhost:5000/api/reports", {
-        const response = await fetch("http://65.0.178.125:5000/api/reports", {
+        const response = await fetch("http://13.201.227.231:5000/api/reports", {
                 method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`
